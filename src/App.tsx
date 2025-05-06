@@ -1,12 +1,30 @@
 import { useEffect, useState } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
-import { Order } from './types/Order';
-import McDonalds_logo from './assets/McDonalds_logo.png';
+import { Order} from './types/Order';
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
+
+  const tabs = ["All", "In Progress", "Completed"];
+  const currentIndex = tabs.indexOf(selectedTab);
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (currentIndex < tabs.length - 1) {
+        setSelectedTab(tabs[currentIndex + 1]);
+      }
+    },
+    onSwipedRight: () => {
+      if (currentIndex > 0) {
+        setSelectedTab(tabs[currentIndex - 1]);
+      }
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: true,
+  });
 
   useEffect(() => {
     const fakeOrders: Order[] = [
@@ -51,14 +69,15 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 py-12">
-      <div className="flex justify-center mb-100 ">
-        <img src={McDonalds_logo} alt="Logo" className="w-24 h-auto" />
-      </div>
-
+    <div {...handlers} className="min-h-screen bg-gray-900 text-gray-100 py-12">
       <div className="max-w-4xl mx-auto px-6">
-        <h1 className="text-4xl font-bold mb-8 text-center">Orders</h1>
-        
+
+        <div className="flex justify-end mb-8">
+          <img src="/logo.png" alt="Logo" className="w-24 h-auto" />
+        </div>
+
+        <h1 className="text-4xl font-bold mb-8 text-center">Orders Dashboard</h1>
+
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
         <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
