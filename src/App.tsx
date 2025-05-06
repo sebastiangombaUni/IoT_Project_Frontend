@@ -3,7 +3,7 @@ import { useSwipeable } from 'react-swipeable';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
 import { Order} from './types/Order';
-import McDonalds_Logo from './assets/McDonalds_Logo.png';
+import McDonalds_Logo from './assets/McDonalds_logo.png';
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
