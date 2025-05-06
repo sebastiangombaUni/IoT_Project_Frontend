@@ -6,7 +6,7 @@ interface TabsSelectorProps {
 }
 
 const TabsSelector = ({ selectedTab, onSelectTab }: TabsSelectorProps) => {
-  const tabs = ["All", "In Progress", "Completed"];
+  const tabs = ["All","Pending", "In Progress", "Completed"];
 
   const currentIndex = tabs.indexOf(selectedTab);
 

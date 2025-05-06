@@ -3,12 +3,13 @@ import { useSwipeable } from 'react-swipeable';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
 import { Order} from './types/Order';
+import McDonalds_Logo from './assets/McDonalds_Logo.png';
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
 
-  const tabs = ["All", "In Progress", "Completed"];
+  const tabs = ["All", "Pending", "In Progress", "Completed"];
   const currentIndex = tabs.indexOf(selectedTab);
 
   const handlers = useSwipeable({
@@ -72,11 +73,11 @@ function App() {
     <div {...handlers} className="min-h-screen bg-gray-900 text-gray-100 py-12">
       <div className="max-w-4xl mx-auto px-6">
 
-        <div className="flex justify-end mb-8">
-          <img src="/logo.png" alt="Logo" className="w-24 h-auto" />
+        <div className="flex justify-center mb-6">
+          <img src={McDonalds_Logo} alt="McDonalds_Logo" className="w-24 h-auto" />
         </div>
 
-        <h1 className="text-4xl font-bold mb-8 text-center">Orders Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-8 text-center">Orders</h1>
 
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
