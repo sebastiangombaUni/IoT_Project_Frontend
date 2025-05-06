@@ -58,7 +58,7 @@ function App() {
 
       <div className="max-w-4xl mx-auto px-6">
         <h1 className="text-4xl font-bold mb-8 text-center">Orders</h1>
-
+        
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
         <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
