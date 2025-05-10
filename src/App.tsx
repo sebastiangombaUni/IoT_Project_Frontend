@@ -6,6 +6,7 @@ import CreateOrderModal from './components/CreateOrderModal';
 import { Order } from './types/Order';
 import McDonalds_Logo from './assets/McDonalds_logo.png';
 
+
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
@@ -87,11 +88,11 @@ function App() {
 
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
-        {/* ✅ Botón Crear Orden */}
+      
         <div className="flex justify-end mb-4">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+            className="bg-mcdonalds-red text-white px-4 py-2 rounded hover:bg-green-700 transition"
           >
             Create new order
           </button>
@@ -100,7 +101,7 @@ function App() {
         {/* Listado de órdenes */}
         <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
 
-        {/* ✅ Modal Crear Orden */}
+    
         <CreateOrderModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
