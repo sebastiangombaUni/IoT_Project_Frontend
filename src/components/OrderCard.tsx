@@ -1,16 +1,11 @@
-import { useState, /*useEffect */} from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Order } from "../types/Order";
+import { Dish } from "../types/Dish";
 
 interface OrderCardProps {
   order: Order;
   onStatusChange: (id: string, newStatus: Order['status']) => void;
-}
-
-interface Dish {
-  id: number;
-  name: string;
-  price: number;
 }
 
 function OrderCard({ order, onStatusChange }: OrderCardProps) {
@@ -39,19 +34,20 @@ function OrderCard({ order, onStatusChange }: OrderCardProps) {
     if (order.status === "completed") return "Completed";
     return "Created";
   };
-
+  
   const openModal = async () => {
     setIsModalOpen(true);
     setIsLoadingDishes(true);
     try {
-      const res = await axios.get("/dishes");
-      setDishes(res.data);
+      const res = await axios.get<Dish[]>("/dishes"); 
+      setDishes(res.data); 
     } catch (err) {
       console.error("Error al cargar los platos:", err);
     } finally {
       setIsLoadingDishes(false);
     }
   };
+  
 
   const addDishToOrder = async (dishId: number) => {
     try {
