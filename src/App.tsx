@@ -3,14 +3,23 @@ import { useSwipeable } from 'react-swipeable';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
 import CreateOrderModal from './components/CreateOrderModal';
+import AddDishModal from './components/AddDishModal'; 
 import { Order } from './types/Order';
 import McDonalds_Logo from './assets/McDonalds_logo.png';
+import Configuration_Icon from './assets/configuration_icon.png';
 
+interface Dish {
+  id: number;
+  name: string;
+  price: number;
+}
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // 👈 nuevo estado
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAddDishModalOpen, setIsAddDishModalOpen] = useState(false); 
+  const [,setDishes] = useState<Dish[]>([]); 
 
   const tabs = ["All", "Pending", "In Progress", "Completed"];
   const currentIndex = tabs.indexOf(selectedTab);
@@ -68,6 +77,10 @@ function App() {
     setOrders(prev => [...prev, newOrder]);
   };
 
+  const handleAddDish = (newDish: Dish) => {
+    setDishes(prev => [...prev, newDish]);
+  };
+
   const filteredOrders = orders.filter(order => {
     if (selectedTab === 'All') return true;
     if (selectedTab === 'Pending') return order.status === 'pending';
@@ -84,11 +97,20 @@ function App() {
           <img src={McDonalds_Logo} alt="McDonalds_Logo" className="w-24 h-auto" />
         </div>
 
-        <h1 className="text-4xl font-bold mb-8 text-center">Orders</h1>
+        <div className="relative mb-8 flex justify-center items-center">
+          <h1 className="text-4xl font-bold">Orders</h1>
+
+          <button onClick={() => setIsAddDishModalOpen(true)} className="absolute right-0">
+            <img
+              src={Configuration_Icon}
+              alt="Configuración"
+              className="w-6 h-6 hover:opacity-80 transition"
+            />
+          </button>
+        </div>
 
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
-      
         <div className="flex justify-end mb-4">
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -98,14 +120,18 @@ function App() {
           </button>
         </div>
 
-        {/* Listado de órdenes */}
         <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
 
-    
         <CreateOrderModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onOrderCreated={handleOrderCreated} // ← se agregará localmente
+          onOrderCreated={handleOrderCreated}
+        />
+
+        <AddDishModal
+          isOpen={isAddDishModalOpen}
+          onClose={() => setIsAddDishModalOpen(false)}
+          onAddDish={handleAddDish}
         />
       </div>
     </div>
