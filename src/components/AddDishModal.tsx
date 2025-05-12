@@ -1,49 +1,51 @@
 import { useState } from "react";
+import axios from "axios";
 
 interface AddDishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddDish: (dish: {
-    id: number;
-    name: string;
-    price: number;
-    description: string;
-    image: string;
-    idcategory: number;
-  }) => void;
 }
 
-const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish }) => {
+const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [idcategory, setIdcategory] = useState<number>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name || price === null) {
       alert("Por favor, completa al menos el nombre y el precio.");
       return;
     }
 
-    const newDish = {
-      id: Date.now(), // valor temporal hasta que tengas backend
-      name,
-      price,
-      description,
-      image,
-      idcategory,
-    };
+    setIsSubmitting(true);
+    try {
+      await axios.post("http://localhost:8080/dish", {
+        name,
+        description,
+        price,
+        image,
+        idcategory,
+      });
 
-    onAddDish(newDish);
-    onClose();
+      alert("Plato creado exitosamente.");
+      onClose();
 
-    // Limpiar campos
-    setName("");
-    setPrice(null);
-    setDescription("");
-    setImage("");
-    setIdcategory(1);
+      // Limpiar formulario
+      setName("");
+      setPrice(null);
+      setDescription("");
+      setImage("");
+      setIdcategory(1);
+    } catch (err) {
+      console.error("Error al crear el plato:", err);
+      alert("Hubo un error al crear el plato.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -54,7 +56,6 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
       <div className="fixed z-50 bg-white text-gray-900 rounded-lg shadow-lg p-6 w-11/12 md:w-1/2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <h2 className="text-xl font-bold mb-4">Agregar nuevo plato</h2>
 
-        {/* Nombre */}
         <label className="block mb-3">
           <span className="text-sm font-medium">Nombre</span>
           <input
@@ -65,18 +66,16 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
           />
         </label>
 
-        {/* Precio */}
         <label className="block mb-3">
           <span className="text-sm font-medium">Precio</span>
           <input
             type="number"
-            value={price ?? ''}
+            value={price ?? ""}
             onChange={(e) => setPrice(Number(e.target.value))}
             className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
           />
         </label>
 
-        {/* Descripción */}
         <label className="block mb-3">
           <span className="text-sm font-medium">Descripción</span>
           <textarea
@@ -87,9 +86,8 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
           />
         </label>
 
-        {/* Imagen */}
         <label className="block mb-3">
-          <span className="text-sm font-medium">URL de imagen</span>
+          <span className="text-sm font-medium">Ruta o nombre de la imagen</span>
           <input
             type="text"
             value={image}
@@ -98,9 +96,8 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
           />
         </label>
 
-        {/* Categoría */}
         <label className="block mb-6">
-          <span className="text-sm font-medium">Categoría (ID)</span>
+          <span className="text-sm font-medium">ID Categoría</span>
           <input
             type="number"
             value={idcategory}
@@ -109,7 +106,6 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
           />
         </label>
 
-        {/* Botones */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
@@ -119,9 +115,10 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose, onAddDish 
           </button>
           <button
             onClick={handleSubmit}
+            disabled={isSubmitting}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            Agregar
+            {isSubmitting ? "Agregando..." : "Agregar"}
           </button>
         </div>
       </div>

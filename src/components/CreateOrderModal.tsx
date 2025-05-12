@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Order } from "../types/Order";
+import axios from "axios";
+import { Order } from "../types/Order"; // Asegúrate de tener esta definición
 
 interface Dish {
   id: number;
@@ -10,23 +11,22 @@ interface Dish {
 interface CreateOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  dishes: Dish[];
   onOrderCreated: (newOrder: Order) => void;
 }
 
-const fakeDishes: Dish[] = [
-  { id: 1, name: "Big Mac", price: 15000 },
-  { id: 2, name: "Papas Grandes", price: 7000 },
-  { id: 3, name: "Coca Cola", price: 5000 },
-  { id: 4, name: "McNuggets", price: 10000 },
-];
-
-const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, onOrderCreated }) => {
+const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
+  isOpen,
+  onClose,
+  dishes,
+  onOrderCreated,
+}) => {
   const [selectedDishes, setSelectedDishes] = useState<Set<number>>(new Set());
   const [tableNumber, setTableNumber] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
-      // resetear modal al cerrar
       setSelectedDishes(new Set());
       setTableNumber(null);
     }
@@ -40,28 +40,59 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, on
     });
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (!tableNumber || selectedDishes.size === 0) {
-      alert("Por favor, ingresa el número de mesa y selecciona al menos un plato.");
+      alert("Debes seleccionar una mesa y al menos un plato.");
       return;
     }
 
-    const selectedDishObjects = fakeDishes.filter(dish => selectedDishes.has(dish.id));
+    setIsSubmitting(true);
+    try {
+      // 1. Crear la orden
+      const res = await axios.post("http://localhost:8080/order", {
+        id_desk: tableNumber,
+        id_status: "pending",
+      });
 
-    const newOrder: Order = {
-      id: String(Date.now()), // simulación de ID
-      table: String(tableNumber),
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      items: selectedDishObjects.map(dish => ({
-        productId: String(dish.id),
-        productName: dish.name,
-        quantity: 1 // por simplicidad
-      }))
-    };
+      const id_order = res.data;
 
-    onOrderCreated(newOrder);
-    onClose();
+      // 2. Asociar los platos a la orden
+      await Promise.all(
+        [...selectedDishes].map(dishId =>
+          axios.post("http://localhost:8080/invoice", {
+            id_order,
+            id_dish: dishId,
+          })
+        )
+      );
+
+      // 3. Construir objeto tipo Order (local)
+      const createdAt = new Date().toISOString();
+      const newOrder: Order = {
+        id: String(id_order),
+        table: String(tableNumber),
+        status: "pending",
+        createdAt,
+        items: [...selectedDishes].map(dishId => {
+          const dish = dishes.find(d => d.id === dishId);
+          return {
+            productId: String(dish?.id || dishId),
+            productName: dish?.name || "Plato desconocido",
+            quantity: 1,
+          };
+        }),
+      };
+
+      alert("Orden creada exitosamente.");
+      onOrderCreated(newOrder);
+      onClose();
+
+    } catch (err) {
+      console.error("Error al crear la orden:", err);
+      alert("Hubo un error al crear la orden.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -84,10 +115,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, on
 
         <h3 className="text-lg font-semibold mt-4 mb-2">Seleccionar platos</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto">
-          {fakeDishes.map(dish => (
+          {dishes.map(dish => (
             <div
               key={dish.id}
-              className={`border p-3 rounded cursor-pointer ${selectedDishes.has(dish.id) ? 'bg-green-100 border-green-500' : ''}`}
+              className={`border p-3 rounded cursor-pointer ${
+                selectedDishes.has(dish.id)
+                  ? "bg-green-100 border-green-500"
+                  : ""
+              }`}
               onClick={() => toggleDish(dish.id)}
             >
               <h4 className="font-medium">{dish.name}</h4>
@@ -105,9 +140,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, on
           </button>
           <button
             onClick={handleCreateOrder}
+            disabled={isSubmitting}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            Crear orden
+            {isSubmitting ? "Creando..." : "Crear orden"}
           </button>
         </div>
       </div>

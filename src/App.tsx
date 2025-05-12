@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
+import axios from 'axios';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
 import CreateOrderModal from './components/CreateOrderModal';
-import AddDishModal from './components/AddDishModal'; 
+import AddDishModal from './components/AddDishModal';
 import { Order } from './types/Order';
 import McDonalds_Logo from './assets/McDonalds_logo.png';
 import Configuration_Icon from './assets/configuration_icon.png';
@@ -11,15 +12,35 @@ import Configuration_Icon from './assets/configuration_icon.png';
 interface Dish {
   id: number;
   name: string;
+  description: string;
+  image: string;
   price: number;
+  idcategory: string;
+}
+
+interface DishFromBackend {
+  IDDish: number;
+  Name: string;
+  Description: string;
+  Image: string;
+  Price: number;
+  IDCategory: string;
+}
+
+interface RawInvoice {
+  id_order: number;
+  id_dish: number;
+  created_at: string;
+  id_desk: number;
+  id_status: string;
 }
 
 function App() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isAddDishModalOpen, setIsAddDishModalOpen] = useState(false); 
-  const [,setDishes] = useState<Dish[]>([]); 
+  const [isAddDishModalOpen, setIsAddDishModalOpen] = useState(false);
 
   const tabs = ["All", "Pending", "In Progress", "Completed"];
   const currentIndex = tabs.indexOf(selectedTab);
@@ -39,46 +60,89 @@ function App() {
     trackMouse: true,
   });
 
+  // Primero cargamos los platos
   useEffect(() => {
-    const fakeOrders: Order[] = [
-      {
-        id: '1',
-        table: '5',
-        status: 'pending',
-        items: [
-          { productId: 'burger1', productName: 'Big Mac', quantity: 2 },
-          { productId: 'drink1', productName: 'Coca Cola', quantity: 2 },
-        ],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        table: '3',
-        status: 'in_progress',
-        items: [
-          { productId: 'burger2', productName: 'Quarter Pounder', quantity: 1 },
-        ],
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    setOrders(fakeOrders);
+    fetchDishes();
   }, []);
 
-  const handleStatusChange = (id: string, newStatus: Order['status']) => {
-    setOrders(prev =>
-      prev.map(order =>
-        order.id === id ? { ...order, status: newStatus } : order
-      )
-    );
+  // Luego cargamos las órdenes cuando ya estén los platos
+  useEffect(() => {
+    if (dishes.length > 0) {
+      fetchOrders();
+    }
+  }, [dishes]);
+
+  const fetchDishes = async () => {
+    try {
+      const res = await axios.get<DishFromBackend[]>("http://localhost:8080/dishes");
+      setDishes(
+        res.data.map(d => ({
+          id: d.IDDish,
+          name: d.Name,
+          description: d.Description,
+          image: d.Image,
+          price: d.Price,
+          idcategory: d.IDCategory,
+        }))
+      );
+    } catch (err) {
+      console.error("Error al cargar los platos:", err);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get<RawInvoice[]>("http://localhost:8080/invoices");
+      const grouped: { [key: string]: Order } = {};
+
+      res.data.forEach((item) => {
+        const id = String(item.id_order);
+
+        if (!grouped[id]) {
+          grouped[id] = {
+            id,
+            table: String(item.id_desk),
+            status: (
+              item.id_status === "InProgess" ? "in_progress" :
+              item.id_status === "Done" ? "completed" :
+              item.id_status === "created" ? "pending" :
+              item.id_status
+            ) as "pending" | "in_progress" | "completed",
+            createdAt: item.created_at,
+            items: [],
+          };
+        }
+
+        const matchingDish = dishes.find(d => d.id === item.id_dish);
+
+        grouped[id].items.push({
+          productId: String(item.id_dish),
+          productName: matchingDish?.name || `Plato #${item.id_dish}`,
+          quantity: 1,
+        });
+      });
+
+      setOrders(Object.values(grouped));
+    } catch (err) {
+      console.error("Error al cargar órdenes:", err);
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: Order['status']) => {
+    try {
+      await axios.put(`http://localhost:8080/changestatus/${id}/${newStatus}`);
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === id ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (err) {
+      console.error("Error al cambiar el estado:", err);
+    }
   };
 
   const handleOrderCreated = (newOrder: Order) => {
     setOrders(prev => [...prev, newOrder]);
-  };
-
-  const handleAddDish = (newDish: Dish) => {
-    setDishes(prev => [...prev, newDish]);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -99,8 +163,10 @@ function App() {
 
         <div className="relative mb-8 flex justify-center items-center">
           <h1 className="text-4xl font-bold">Orders</h1>
-
-          <button onClick={() => setIsAddDishModalOpen(true)} className="absolute right-0">
+          <button
+            onClick={() => setIsAddDishModalOpen(true)}
+            className="absolute right-0"
+          >
             <img
               src={Configuration_Icon}
               alt="Configuración"
@@ -126,12 +192,12 @@ function App() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onOrderCreated={handleOrderCreated}
+          dishes={dishes}
         />
 
         <AddDishModal
           isOpen={isAddDishModalOpen}
           onClose={() => setIsAddDishModalOpen(false)}
-          onAddDish={handleAddDish}
         />
       </div>
     </div>
