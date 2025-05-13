@@ -3,7 +3,6 @@ import { useSwipeable } from 'react-swipeable';
 import axios from 'axios';
 import OrderList from './components/OrderList';
 import TabsSelector from './components/TabsSelector';
-import CreateOrderModal from './components/CreateOrderModal';
 import AddDishModal from './components/AddDishModal';
 import { Order } from './types/Order';
 import McDonalds_Logo from './assets/McDonalds_logo.png';
@@ -39,7 +38,6 @@ function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedTab, setSelectedTab] = useState<string>('All');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddDishModalOpen, setIsAddDishModalOpen] = useState(false);
 
   const tabs = ["All", "Pending", "In Progress", "Completed"];
@@ -141,10 +139,6 @@ function App() {
     }
   };
 
-  const handleOrderCreated = (newOrder: Order) => {
-    setOrders(prev => [...prev, newOrder]);
-  };
-
   const filteredOrders = orders.filter(order => {
     if (selectedTab === 'All') return true;
     if (selectedTab === 'Pending') return order.status === 'pending';
@@ -177,23 +171,9 @@ function App() {
 
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-mcdonalds-red text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          >
-            Create new order
-          </button>
-        </div>
-
         <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
 
-        <CreateOrderModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onOrderCreated={handleOrderCreated}
-          dishes={dishes}
-        />
+
 
         <AddDishModal
           isOpen={isAddDishModalOpen}
