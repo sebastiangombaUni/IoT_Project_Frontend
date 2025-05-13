@@ -105,7 +105,7 @@ function App() {
             status: (
               item.id_status === "InProgess" ? "in_progress" :
               item.id_status === "Done" ? "completed" :
-              item.id_status === "created" ? "pending" :
+              item.id_status === "Pending" ? "pending" :
               item.id_status
             ) as "pending" | "in_progress" | "completed",
             createdAt: item.created_at,
