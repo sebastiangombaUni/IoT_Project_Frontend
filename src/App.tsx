@@ -57,6 +57,29 @@ function App() {
     preventScrollOnSwipe: true,
     trackMouse: true,
   });
+  const handleDeleteOrder = async (id: string) => {
+  const orderToDelete = orders.find(order => order.id === id);
+  if (!orderToDelete) return;
+
+  try {
+    // borrar cada plato de la orden
+    await Promise.all(
+      orderToDelete.items.map(item =>
+        axios.delete(`http://localhost:8080/invoice/dish/${id}/${item.productId}`)
+        
+      )
+      
+    ); alert("Orden eliminada correctamente");
+;
+
+    // actualizar el estado en el frontend
+    setOrders(prev => prev.filter(order => order.id !== id));
+  } catch (err) {
+    console.error("Error al eliminar orden:", err);
+  }
+};
+
+
 
   // Primero cargamos los platos
   useEffect(() => {
@@ -171,7 +194,7 @@ function App() {
 
         <TabsSelector selectedTab={selectedTab} onSelectTab={setSelectedTab} />
 
-        <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} />
+        <OrderList orders={filteredOrders} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
 
 
 

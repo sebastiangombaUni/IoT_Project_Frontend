@@ -3,17 +3,18 @@ import { Order } from "../types/Order";
 interface OrderCardProps {
   order: Order;
   onStatusChange: (id: string, newStatus: Order['status']) => void;
+  onDelete: (id: string) => void;
 }
 
-function OrderCard({ order, onStatusChange }: OrderCardProps) {
+function OrderCard({ order, onStatusChange, onDelete }: OrderCardProps) {
   const handleNextStatus = () => {
     let newStatus: Order['status'];
 
     if (order.status === 'pending') newStatus = 'in_progress';
     else if (order.status === 'in_progress') newStatus = 'completed';
-    else return; // si ya está 'completed', no hace nada
+    else return;
 
-    onStatusChange(order.id, newStatus); // <- aquí notificamos al padre
+    onStatusChange(order.id, newStatus);
   };
 
   const getStatusColor = () => {
@@ -27,7 +28,7 @@ function OrderCard({ order, onStatusChange }: OrderCardProps) {
     if (order.status === "pending") return "Pending";
     if (order.status === "in_progress") return "In Progress";
     if (order.status === "completed") return "Completed";
-    return "Unknown";
+    return "Created";
   };
 
   return (
@@ -40,12 +41,8 @@ function OrderCard({ order, onStatusChange }: OrderCardProps) {
         </div>
       </div>
 
-      <p className="mb-2">
-        <span className="font-semibold">Table:</span> {order.table}
-      </p>
-      <p className="mb-4">
-        <span className="font-semibold">Created at:</span> {new Date(order.createdAt).toLocaleString()}
-      </p>
+      <p className="mb-2"><span className="font-semibold">Table:</span> {order.table}</p>
+      <p className="mb-4"><span className="font-semibold">Created at:</span> {new Date(order.createdAt).toLocaleString()}</p>
 
       <h4 className="font-semibold mb-2">Items:</h4>
       <ul className="mb-4">
@@ -59,11 +56,18 @@ function OrderCard({ order, onStatusChange }: OrderCardProps) {
       {order.status !== 'completed' && (
         <button
           onClick={handleNextStatus}
-          className="bg-[#ffbc0d] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-400 transition"
+          className="bg-[#ffbc0d] text-black font-semibold px-4 py-2 rounded hover:bg-yellow-400 transition mr-3"
         >
           Next Status
         </button>
       )}
+
+      <button
+        onClick={() => onDelete(order.id)}
+        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+      >
+        Eliminar
+      </button>
     </div>
   );
 }
